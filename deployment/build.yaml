@@ -1,0 +1,115 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/**
+      - test/**
+      - deployment/**
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetVersion: '10.0.x'
+
+stages:
+  - stage: Build
+    displayName: 'Build and Test'
+    jobs:
+      - job: Build
+        displayName: 'Build'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET SDK'
+            inputs:
+              packageType: 'sdk'
+              version: '$(dotnetVersion)'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore packages'
+            inputs:
+              command: 'restore'
+              projects: '**/*.csproj'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Build solution'
+            inputs:
+              command: 'build'
+              projects: '**/*.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Run tests'
+            inputs:
+              command: 'test'
+              projects: 'test/**/*.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-build --collect:"XPlat Code Coverage"'
+
+          - task: PublishCodeCoverageResults@1
+            displayName: 'Publish code coverage'
+            inputs:
+              codeCoverageTool: 'Cobertura'
+              summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+
+  - stage: Publish
+    displayName: 'Publish Artifacts'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: Publish
+        displayName: 'Publish'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET SDK'
+            inputs:
+              packageType: 'sdk'
+              version: '$(dotnetVersion)'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish Worker'
+            inputs:
+              command: 'publish'
+              publishWebProjects: false
+              projects: 'src/Notification.Webhook.Worker/Notification.Webhook.Worker.csproj'
+              arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish artifacts'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'notification-webhook-worker'
+              publishLocation: 'Container'
+
+  - stage: Docker
+    displayName: 'Build Docker Image'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: Docker
+        displayName: 'Build and Push Docker Image'
+        steps:
+          - task: Docker@2
+            displayName: 'Build Docker image'
+            inputs:
+              containerRegistry: 'your-container-registry'
+              repository: 'notification-webhook-worker'
+              command: 'build'
+              Dockerfile: 'deployment/Dockerfile'
+              buildContext: '.'
+              tags: |
+                $(Build.BuildId)
+                latest
+
+          - task: Docker@2
+            displayName: 'Push Docker image'
+            inputs:
+              containerRegistry: 'your-container-registry'
+              repository: 'notification-webhook-worker'
+              command: 'push'
+              tags: |
+                $(Build.BuildId)
+                latest

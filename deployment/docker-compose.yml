@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  notification-webhook-worker:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    environment:
+      - DOTNET_ENVIRONMENT=Production
+      - Webhook__Provider=Http
+      - Webhook__DefaultTimeoutSeconds=30
+      - Webhook__DefaultMaxRetries=3
+      - Messaging__Provider=RabbitMQ
+      - Messaging__RabbitMQ__HostName=rabbitmq
+      - Messaging__RabbitMQ__Port=5672
+      - Messaging__RabbitMQ__UserName=guest
+      - Messaging__RabbitMQ__Password=guest
+      - Messaging__RabbitMQ__QueueName=webhook-notifications
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+    networks:
+      - notification-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - notification-network
+
+networks:
+  notification-network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:

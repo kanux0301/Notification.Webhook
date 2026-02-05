@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Notification.Webhook.Application/Notification.Webhook.Application.csproj" />
+    <Project Path="src/Notification.Webhook.Domain/Notification.Webhook.Domain.csproj" />
+    <Project Path="src/Notification.Webhook.Infrastructure/Notification.Webhook.Infrastructure.csproj" />
+    <Project Path="src/Notification.Webhook.Worker/Notification.Webhook.Worker.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Notification.Webhook.Application.Tests/Notification.Webhook.Application.Tests.csproj" />
+    <Project Path="test/Notification.Webhook.Domain.Tests/Notification.Webhook.Domain.Tests.csproj" />
+    <Project Path="test/Notification.Webhook.Infrastructure.Tests/Notification.Webhook.Infrastructure.Tests.csproj" />
+    <Project Path="test/Notification.Webhook.Integration.Tests/Notification.Webhook.Integration.Tests.csproj" />
+    <Project Path="test/Notification.Webhook.Worker.Tests/Notification.Webhook.Worker.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Notification.Webhook.TestSender/Notification.Webhook.TestSender.csproj" />
+  </Folder>
+</Solution>
