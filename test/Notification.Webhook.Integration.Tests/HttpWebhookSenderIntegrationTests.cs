@@ -38,10 +38,13 @@ public class HttpWebhookSenderIntegrationTests : IDisposable
     [Fact]
     public async Task SendAsync_ToRealServer_ShouldDeliverWebhook()
     {
+        // Arrange
         var notification = CreateNotification(_server.BaseUrl + "webhook");
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
         Assert.Equal(200, result.StatusCode);
 
@@ -54,6 +57,7 @@ public class HttpWebhookSenderIntegrationTests : IDisposable
     [Fact]
     public async Task SendAsync_WithCustomHeaders_ShouldIncludeHeaders()
     {
+        // Arrange
         var headers = new Dictionary<string, string>
         {
             { "Authorization", "Bearer test-token-123" },
@@ -61,8 +65,10 @@ public class HttpWebhookSenderIntegrationTests : IDisposable
         };
         var notification = CreateNotification(_server.BaseUrl + "webhook", headers: headers);
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
 
         var received = await _server.WaitForWebhookAsync(TimeSpan.FromSeconds(5));
@@ -74,12 +80,15 @@ public class HttpWebhookSenderIntegrationTests : IDisposable
     [Fact]
     public async Task SendAsync_WithSecret_ShouldIncludeValidSignature()
     {
+        // Arrange
         var secret = "my-webhook-secret";
         var payload = "{\"event\":\"order.created\",\"data\":{\"id\":123}}";
         var notification = CreateNotification(_server.BaseUrl + "webhook", payload: payload, secret: secret);
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
 
         var received = await _server.WaitForWebhookAsync(TimeSpan.FromSeconds(5));
@@ -97,11 +106,14 @@ public class HttpWebhookSenderIntegrationTests : IDisposable
     [Fact]
     public async Task SendAsync_WithNotificationId_ShouldIncludeIdHeader()
     {
+        // Arrange
         var notificationId = Guid.NewGuid();
         var notification = CreateNotification(_server.BaseUrl + "webhook", id: notificationId);
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
 
         var received = await _server.WaitForWebhookAsync(TimeSpan.FromSeconds(5));
@@ -116,11 +128,14 @@ public class HttpWebhookSenderIntegrationTests : IDisposable
     [InlineData(WebhookHttpMethod.PATCH, "PATCH")]
     public async Task SendAsync_WithDifferentMethods_ShouldUseCorrectMethod(WebhookHttpMethod method, string expectedMethod)
     {
+        // Arrange
         _server.ClearReceivedWebhooks();
         var notification = CreateNotification(_server.BaseUrl + "webhook", method: method);
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
 
         var received = await _server.WaitForWebhookAsync(TimeSpan.FromSeconds(5));
@@ -131,12 +146,15 @@ public class HttpWebhookSenderIntegrationTests : IDisposable
     [Fact]
     public async Task SendAsync_WhenServerReturnsError_ShouldReturnFailure()
     {
+        // Arrange
         _server.ResponseHandler = _ => (HttpStatusCode.InternalServerError, "{\"error\":\"Server Error\"}");
 
         var notification = CreateNotification(_server.BaseUrl + "webhook", maxRetries: 0);
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.False(result.Success);
         Assert.Equal(500, result.StatusCode);
     }
@@ -144,12 +162,15 @@ public class HttpWebhookSenderIntegrationTests : IDisposable
     [Fact]
     public async Task SendAsync_WhenServerReturnsBadRequest_ShouldReturnFailure()
     {
+        // Arrange
         _server.ResponseHandler = _ => (HttpStatusCode.BadRequest, "{\"error\":\"Invalid payload\"}");
 
         var notification = CreateNotification(_server.BaseUrl + "webhook", maxRetries: 0);
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.False(result.Success);
         Assert.Equal(400, result.StatusCode);
     }
@@ -157,13 +178,16 @@ public class HttpWebhookSenderIntegrationTests : IDisposable
     [Fact]
     public async Task SendAsync_WithJsonPayload_ShouldSetCorrectContentType()
     {
+        // Arrange
         var notification = CreateNotification(
             _server.BaseUrl + "webhook",
             payload: "{\"event\":\"test\"}",
             contentType: "application/json");
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
 
         var received = await _server.WaitForWebhookAsync(TimeSpan.FromSeconds(5));
@@ -174,13 +198,16 @@ public class HttpWebhookSenderIntegrationTests : IDisposable
     [Fact]
     public async Task SendAsync_WithXmlPayload_ShouldSetCorrectContentType()
     {
+        // Arrange
         var notification = CreateNotification(
             _server.BaseUrl + "webhook",
             payload: "<event><type>test</type></event>",
             contentType: "application/xml");
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
 
         var received = await _server.WaitForWebhookAsync(TimeSpan.FromSeconds(5));
@@ -191,10 +218,13 @@ public class HttpWebhookSenderIntegrationTests : IDisposable
     [Fact]
     public async Task SendAsync_ShouldMeasureDuration()
     {
+        // Arrange
         var notification = CreateNotification(_server.BaseUrl + "webhook");
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
         Assert.NotNull(result.Duration);
         Assert.True(result.Duration > TimeSpan.Zero);

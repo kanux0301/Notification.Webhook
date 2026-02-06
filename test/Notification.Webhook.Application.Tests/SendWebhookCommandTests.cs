@@ -23,6 +23,7 @@ public class SendWebhookCommandTests
     [Fact]
     public async Task ExecuteAsync_WithValidMessage_ShouldCallSender()
     {
+        // Arrange
         var message = new SendWebhookMessage(
             NotificationId: Guid.NewGuid(),
             WebhookUrl: "https://api.example.com/webhook",
@@ -42,8 +43,10 @@ public class SendWebhookCommandTests
                 ResponseBody: "OK",
                 Duration: TimeSpan.FromMilliseconds(100)));
 
+        // Act
         var result = await _command.ExecuteAsync(message, CancellationToken.None);
 
+        // Assert
         Assert.True(result.Success);
         Assert.Equal(200, result.StatusCode);
         _mockSender.Verify(s => s.SendAsync(It.IsAny<WebhookNotification>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -52,6 +55,7 @@ public class SendWebhookCommandTests
     [Fact]
     public async Task ExecuteAsync_WhenSenderFails_ShouldReturnError()
     {
+        // Arrange
         var message = new SendWebhookMessage(
             NotificationId: Guid.NewGuid(),
             WebhookUrl: "https://api.example.com/webhook",
@@ -70,8 +74,10 @@ public class SendWebhookCommandTests
                 StatusCode: 500,
                 ErrorMessage: "Internal Server Error"));
 
+        // Act
         var result = await _command.ExecuteAsync(message, CancellationToken.None);
 
+        // Assert
         Assert.False(result.Success);
         Assert.Equal(500, result.StatusCode);
     }

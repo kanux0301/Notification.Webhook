@@ -34,13 +34,16 @@ public class HttpWebhookSenderTests
     [Fact]
     public async Task SendAsync_WithSuccessResponse_ShouldReturnSuccess()
     {
+        // Arrange
         SetupMockResponse(HttpStatusCode.OK, "{\"status\":\"received\"}");
 
         var sender = new HttpWebhookSender(_httpClient, _options, _mockLogger.Object);
         var notification = CreateTestNotification();
 
+        // Act
         var result = await sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
         Assert.Equal(200, result.StatusCode);
         Assert.Equal("{\"status\":\"received\"}", result.ResponseBody);
@@ -50,13 +53,16 @@ public class HttpWebhookSenderTests
     [Fact]
     public async Task SendAsync_WithServerError_ShouldReturnFailure()
     {
+        // Arrange
         SetupMockResponse(HttpStatusCode.InternalServerError, "Internal Server Error");
 
         var sender = new HttpWebhookSender(_httpClient, _options, _mockLogger.Object);
         var notification = CreateTestNotification(maxRetries: 0);
 
+        // Act
         var result = await sender.SendAsync(notification);
 
+        // Assert
         Assert.False(result.Success);
         Assert.Equal(500, result.StatusCode);
     }
@@ -64,13 +70,16 @@ public class HttpWebhookSenderTests
     [Fact]
     public async Task SendAsync_WithCreatedResponse_ShouldReturnSuccess()
     {
+        // Arrange
         SetupMockResponse(HttpStatusCode.Created, "{\"id\":123}");
 
         var sender = new HttpWebhookSender(_httpClient, _options, _mockLogger.Object);
         var notification = CreateTestNotification();
 
+        // Act
         var result = await sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
         Assert.Equal(201, result.StatusCode);
     }
@@ -78,13 +87,16 @@ public class HttpWebhookSenderTests
     [Fact]
     public async Task SendAsync_WithNoContentResponse_ShouldReturnSuccess()
     {
+        // Arrange
         SetupMockResponse(HttpStatusCode.NoContent, "");
 
         var sender = new HttpWebhookSender(_httpClient, _options, _mockLogger.Object);
         var notification = CreateTestNotification();
 
+        // Act
         var result = await sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
         Assert.Equal(204, result.StatusCode);
     }
@@ -92,13 +104,16 @@ public class HttpWebhookSenderTests
     [Fact]
     public async Task SendAsync_WithBadRequest_ShouldReturnFailure()
     {
+        // Arrange
         SetupMockResponse(HttpStatusCode.BadRequest, "{\"error\":\"invalid payload\"}");
 
         var sender = new HttpWebhookSender(_httpClient, _options, _mockLogger.Object);
         var notification = CreateTestNotification(maxRetries: 0);
 
+        // Act
         var result = await sender.SendAsync(notification);
 
+        // Assert
         Assert.False(result.Success);
         Assert.Equal(400, result.StatusCode);
     }
@@ -106,6 +121,7 @@ public class HttpWebhookSenderTests
     [Fact]
     public async Task SendAsync_WithCustomHeaders_ShouldIncludeHeaders()
     {
+        // Arrange
         HttpRequestMessage? capturedRequest = null;
         _mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -126,8 +142,10 @@ public class HttpWebhookSenderTests
         };
         var notification = CreateTestNotification(headers: headers);
 
+        // Act
         await sender.SendAsync(notification);
 
+        // Assert
         Assert.NotNull(capturedRequest);
         Assert.True(capturedRequest.Headers.Contains("Authorization"));
         Assert.True(capturedRequest.Headers.Contains("X-Custom-Header"));
@@ -137,6 +155,7 @@ public class HttpWebhookSenderTests
     [Fact]
     public async Task SendAsync_WithSecret_ShouldIncludeSignature()
     {
+        // Arrange
         HttpRequestMessage? capturedRequest = null;
         _mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -152,8 +171,10 @@ public class HttpWebhookSenderTests
         var sender = new HttpWebhookSender(_httpClient, _options, _mockLogger.Object);
         var notification = CreateTestNotification(secret: "my-webhook-secret");
 
+        // Act
         await sender.SendAsync(notification);
 
+        // Assert
         Assert.NotNull(capturedRequest);
         Assert.True(capturedRequest.Headers.Contains("X-Webhook-Signature"));
         var signature = capturedRequest.Headers.GetValues("X-Webhook-Signature").First();
@@ -163,6 +184,7 @@ public class HttpWebhookSenderTests
     [Fact]
     public async Task SendAsync_ShouldIncludeNotificationId()
     {
+        // Arrange
         HttpRequestMessage? capturedRequest = null;
         _mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -178,8 +200,10 @@ public class HttpWebhookSenderTests
         var sender = new HttpWebhookSender(_httpClient, _options, _mockLogger.Object);
         var notification = CreateTestNotification();
 
+        // Act
         await sender.SendAsync(notification);
 
+        // Assert
         Assert.NotNull(capturedRequest);
         Assert.True(capturedRequest.Headers.Contains("X-Notification-Id"));
     }
@@ -190,6 +214,7 @@ public class HttpWebhookSenderTests
     [InlineData(WebhookHttpMethod.PATCH)]
     public async Task SendAsync_WithDifferentMethods_ShouldUseCorrectMethod(WebhookHttpMethod method)
     {
+        // Arrange
         HttpRequestMessage? capturedRequest = null;
         _mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -205,8 +230,10 @@ public class HttpWebhookSenderTests
         var sender = new HttpWebhookSender(_httpClient, _options, _mockLogger.Object);
         var notification = CreateTestNotification(method: method);
 
+        // Act
         await sender.SendAsync(notification);
 
+        // Assert
         Assert.NotNull(capturedRequest);
         var expectedMethod = method switch
         {

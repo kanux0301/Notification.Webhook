@@ -23,6 +23,7 @@ public class WorkerTests
     [Fact]
     public async Task ExecuteAsync_ShouldStartMessageConsumer()
     {
+        // Arrange
         _mockMessageConsumer
             .Setup(c => c.StartAsync(It.IsAny<Func<SendWebhookMessage, CancellationToken, Task>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -32,6 +33,7 @@ public class WorkerTests
         using var cts = new CancellationTokenSource();
         cts.CancelAfter(100);
 
+        // Act
         try
         {
             await worker.StartAsync(cts.Token);
@@ -43,6 +45,7 @@ public class WorkerTests
             // Expected
         }
 
+        // Assert
         _mockMessageConsumer.Verify(
             c => c.StartAsync(It.IsAny<Func<SendWebhookMessage, CancellationToken, Task>>(), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -51,6 +54,7 @@ public class WorkerTests
     [Fact]
     public async Task StopAsync_ShouldStopMessageConsumer()
     {
+        // Arrange
         _mockMessageConsumer
             .Setup(c => c.StartAsync(It.IsAny<Func<SendWebhookMessage, CancellationToken, Task>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -73,14 +77,17 @@ public class WorkerTests
             // Expected
         }
 
+        // Act
         await worker.StopAsync(CancellationToken.None);
 
+        // Assert
         _mockMessageConsumer.Verify(c => c.StopAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenMessageReceived_ShouldExecuteCommand()
     {
+        // Arrange
         var messageReceived = new TaskCompletionSource<bool>();
         Func<SendWebhookMessage, CancellationToken, Task>? capturedHandler = null;
 
@@ -139,8 +146,10 @@ public class WorkerTests
             MaxRetries: 3,
             TimeoutSeconds: 30);
 
+        // Act
         await capturedHandler(message, CancellationToken.None);
 
+        // Assert
         mockWebhookSender.Verify(
             s => s.SendAsync(It.IsAny<Domain.Entities.WebhookNotification>(), It.IsAny<CancellationToken>()),
             Times.Once);
