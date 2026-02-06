@@ -21,6 +21,7 @@ public class ConsoleWebhookSenderTests
     [Fact]
     public async Task SendAsync_ShouldReturnSuccess()
     {
+        // Arrange
         var notification = WebhookNotification.Create(
             id: Guid.NewGuid(),
             url: WebhookUrl.Create("https://api.example.com/webhook"),
@@ -31,8 +32,10 @@ public class ConsoleWebhookSenderTests
             maxRetries: 3,
             timeoutSeconds: 30);
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
         Assert.Equal(200, result.StatusCode);
         Assert.NotNull(result.ResponseBody);
@@ -41,6 +44,7 @@ public class ConsoleWebhookSenderTests
     [Fact]
     public async Task SendAsync_WithHeaders_ShouldReturnSuccess()
     {
+        // Arrange
         var headers = new Dictionary<string, string>
         {
             { "Authorization", "Bearer token123" },
@@ -57,8 +61,10 @@ public class ConsoleWebhookSenderTests
             maxRetries: 3,
             timeoutSeconds: 30);
 
+        // Act
         var result = await _sender.SendAsync(notification);
 
+        // Assert
         Assert.True(result.Success);
         Assert.Equal(200, result.StatusCode);
     }
@@ -66,6 +72,7 @@ public class ConsoleWebhookSenderTests
     [Fact]
     public async Task SendAsync_WithCancellation_ShouldNotThrow()
     {
+        // Arrange
         var notification = WebhookNotification.Create(
             id: Guid.NewGuid(),
             url: WebhookUrl.Create("https://api.example.com/webhook"),
@@ -73,8 +80,11 @@ public class ConsoleWebhookSenderTests
             payload: WebhookPayload.Create("{\"data\":\"value\"}"));
 
         using var cts = new CancellationTokenSource();
+
+        // Act
         var result = await _sender.SendAsync(notification, cts.Token);
 
+        // Assert
         Assert.True(result.Success);
     }
 }

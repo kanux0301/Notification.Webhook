@@ -10,8 +10,10 @@ public class WebhookUrlTests
     [InlineData("https://hooks.slack.com/services/xxx")]
     public void Create_WithValidUrl_ShouldSucceed(string url)
     {
+        // Act
         var webhookUrl = WebhookUrl.Create(url);
 
+        // Assert
         Assert.Equal(url, webhookUrl.Value);
     }
 
@@ -21,6 +23,7 @@ public class WebhookUrlTests
     [InlineData("   ")]
     public void Create_WithEmptyUrl_ShouldThrow(string? url)
     {
+        // Act & Assert
         Assert.Throws<ArgumentException>(() => WebhookUrl.Create(url!));
     }
 
@@ -30,6 +33,7 @@ public class WebhookUrlTests
     [InlineData("ws://socket.example.com")]
     public void Create_WithInvalidUrl_ShouldThrow(string url)
     {
+        // Act & Assert
         Assert.Throws<ArgumentException>(() => WebhookUrl.Create(url));
     }
 }

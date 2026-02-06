@@ -74,6 +74,7 @@ public class WebhookPipelineIntegrationTests : IDisposable
     [Fact]
     public async Task FullPipeline_WithPutMethod_ShouldSucceed()
     {
+        // Arrange
         var sender = new HttpWebhookSender(_httpClient, _options, _mockSenderLogger.Object);
         var command = new SendWebhookCommand(sender, _mockCommandLogger.Object);
 
@@ -88,8 +89,10 @@ public class WebhookPipelineIntegrationTests : IDisposable
             MaxRetries: 0,
             TimeoutSeconds: 30);
 
+        // Act
         var result = await command.ExecuteAsync(message, CancellationToken.None);
 
+        // Assert
         Assert.True(result.Success);
 
         var received = await _server.WaitForWebhookAsync(TimeSpan.FromSeconds(5));
@@ -100,6 +103,7 @@ public class WebhookPipelineIntegrationTests : IDisposable
     [Fact]
     public async Task FullPipeline_WhenServerFails_ShouldReturnError()
     {
+        // Arrange
         _server.ResponseHandler = _ => (HttpStatusCode.ServiceUnavailable, "{\"error\":\"Service unavailable\"}");
 
         var sender = new HttpWebhookSender(_httpClient, _options, _mockSenderLogger.Object);
@@ -116,8 +120,10 @@ public class WebhookPipelineIntegrationTests : IDisposable
             MaxRetries: 0,
             TimeoutSeconds: 30);
 
+        // Act
         var result = await command.ExecuteAsync(message, CancellationToken.None);
 
+        // Assert
         Assert.False(result.Success);
         Assert.Equal(503, result.StatusCode);
     }
@@ -125,6 +131,7 @@ public class WebhookPipelineIntegrationTests : IDisposable
     [Fact]
     public async Task FullPipeline_WithMultipleWebhooks_ShouldDeliverAll()
     {
+        // Arrange
         var sender = new HttpWebhookSender(_httpClient, _options, _mockSenderLogger.Object);
         var command = new SendWebhookCommand(sender, _mockCommandLogger.Object);
 
@@ -139,11 +146,11 @@ public class WebhookPipelineIntegrationTests : IDisposable
             MaxRetries: 0,
             TimeoutSeconds: 30)).ToList();
 
-        // Send all webhooks
+        // Act
         var tasks = messages.Select(m => command.ExecuteAsync(m, CancellationToken.None));
         var results = await Task.WhenAll(tasks);
 
-        // All should succeed
+        // Assert
         Assert.All(results, r => Assert.True(r.Success));
 
         // Wait for all to be received
@@ -154,6 +161,7 @@ public class WebhookPipelineIntegrationTests : IDisposable
     [Fact]
     public async Task FullPipeline_WithDifferentContentTypes_ShouldPreserveContentType()
     {
+        // Arrange
         var sender = new HttpWebhookSender(_httpClient, _options, _mockSenderLogger.Object);
         var command = new SendWebhookCommand(sender, _mockCommandLogger.Object);
 
@@ -169,8 +177,10 @@ public class WebhookPipelineIntegrationTests : IDisposable
             MaxRetries: 0,
             TimeoutSeconds: 30);
 
+        // Act
         var result = await command.ExecuteAsync(message, CancellationToken.None);
 
+        // Assert
         Assert.True(result.Success);
 
         var received = await _server.WaitForWebhookAsync(TimeSpan.FromSeconds(5));
